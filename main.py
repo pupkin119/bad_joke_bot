@@ -29,6 +29,18 @@ from telegram import Bot
 
 bot = Bot(token=env('bot_token'))
 
+REQUEST_KWARGS = {
+    'proxy_url': 'socks5://88.198.55.164:1080',
+    # Optional, if you need authentication:
+    # 'urllib3_proxy_kwargs': {
+    #     'username': 'PROXY_USER',
+    #     'password': 'PROXY_PASS',
+    # }
+}
+
+# updater = Updater(token=env('bot_token'), request_kwargs=REQUEST_KWARGS)
+updater = Updater(token=env('bot_token'), use_context=True, request_kwargs=REQUEST_KWARGS)
+
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -118,10 +130,14 @@ def start_joke(update, context):
         u.is_answer = True
         u.number_of_vote = i
         u.save()
-        bot.send_message(chat_id=u.chat_id, text="Привет, " + u.first_name + "!")
-        bot.send_message(chat_id=u.chat_id, text='Дополни как вот такую шутку:')
-        bot.send_message(chat_id=u.chat_id, text=str(text_joke))
-        bot.send_message(chat_id=u.chat_id, text="Ты можешь ответить через /answer команду")
+        # bot.send_message(chat_id=u.chat_id, text="Привет, " + u.first_name + "!")
+        # bot.send_message(chat_id=u.chat_id, text='Дополни как вот такую шутку:')
+        # bot.send_message(chat_id=u.chat_id, text=str(text_joke))
+        # bot.send_message(chat_id=u.chat_id, text="Ты можешь ответить через /answer команду")
+        updater.bot.send_message(chat_id=u.chat_id, text="Привет, " + u.first_name + "!")
+        updater.bot.send_message(chat_id=u.chat_id, text='Дополни как вот такую шутку:')
+        updater.bot.send_message(chat_id=u.chat_id, text=str(text_joke))
+        updater.bot.send_message(chat_id=u.chat_id, text="Ты можешь ответить через /answer команду")
 
     update.message.reply_text('Вопросики отосланы!')
 
@@ -148,7 +164,7 @@ def help(update, context):
     text += "/set_joke : Установить текст шутки [ Может делать только победитель ] \n"
     text += "/start_joke : НАЧАТЬ ИГРУ  \n"
     # update.message.chat["id"]
-    bot.send_message(chat_id=update.message.chat["id"], text=text)
+    updater.bot.send_message(chat_id=update.message.chat["id"], text=text)
     # update.message.reply_text('Игра такая тупая, но тебе понравится!')
     # update.message.reply_text('Список команд')
     # update.message.reply_text('/register : для регистрации')
@@ -223,7 +239,7 @@ def votes(update, context):
     group_id = get_group_id(update)
     all_users = ChatUser.objects.filter(is_in_game = True, group_chat_id = group_id).order_by('number_of_vote')
     if not(all_users.exists()):
-        bot.send_message(chat_id=group_id, text="Игра еще не началась")
+        updater.bot.send_message(chat_id=group_id, text="Игра еще не началась")
         return
 
     text_joke = str(JokeText.objects.filter(group_chat_id = group_id).last().joke_text)
@@ -236,7 +252,7 @@ def votes(update, context):
     text += "\n"
     text += "Номер для голосования: Ответ [ Проголосовало за ответ ]"
 
-    bot.send_message(chat_id=group_id, text=text)
+    updater.bot.send_message(chat_id=group_id, text=text)
     # update.message.reply_text("Вопрос был такой")
     # update.message.reply_text("Заходит как то Еврей, и собака, а бармен им и говорит!")
     # update.message.reply_text("Номер для голосования: Ответ [ Сколько проголосовало за ответ ] ")
@@ -247,7 +263,7 @@ def votes(update, context):
         else:
             ans = " Пользователь не ответил"
         # update.message.reply_text(str(user.number_of_vote) + " : "  + str(ans) +  "[ "+ str(user.score) + " ]" )
-        bot.send_message(chat_id=group_id, text=str(user.number_of_vote) + " : "  + str(ans) +  "[ "+ str(user.score) + " ]")
+        updater.bot.send_message(chat_id=group_id, text=str(user.number_of_vote) + " : "  + str(ans) +  "[ "+ str(user.score) + " ]")
 
 def end_joke_game(update, context):
     user = update.message.from_user
@@ -266,7 +282,7 @@ def end_game(group_chat_id):
     w.game_score = w.game_score + 1
     w.save()
 
-    bot.send_message(chat_id=group_chat_id, text= "Победил: " +  str(w.first_name + " " + w.last_name + " !" ))
+    updater.bot.send_message(chat_id=group_chat_id, text= "Победил: " +  str(w.first_name + " " + w.last_name + " !" ))
 
     for u in ChatUser.objects.filter(group_chat_id = group_chat_id):
         u.is_in_game = False
@@ -329,6 +345,7 @@ def answer(update, context):
 
 def options(update, context):
     user = update.message.from_user
+    # updater.bot.send_message(chat_id=update.message.chat['id'], text =  "test")
     # print(update.message.chat.id)
     # print(update)
     # print(update.message.chat['id'])
@@ -350,7 +367,7 @@ def main():
     # Create the Updater and pass it your bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
     # Post version 12 this will no longer be necessary
-    updater = Updater(token=env('bot_token'), use_context=True)
+
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
