@@ -36,8 +36,13 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 def check_error(update, text):
-    update.message.reply_text("Что то пошло не так, потому что")
+    ans_text = "Что то пошло не так, потому что: \n"
+    ans_text += text
+    # update.message.reply_text("Что то пошло не так, потому что")
     update.message.reply_text(text)
+
+def get_group_id(update):
+    return update.message.chat['id']
 
 # Define a few command handlers. These usually take the two arguments bot and
 # update. Error handlers also receive the raised TelegramError object in error.
@@ -46,8 +51,9 @@ def start(update, context):
     update.message.reply_text('Привет я бот для игры в плохие шутки')
     update.message.reply_text('Все доступные команды ты можешь посмотреть по /help')
 
-def set_stupid_joke(update, context):
+def set_joke(update, context):
     user = update.message.from_user
+    group_id = get_group_id(update)
 
     text_ans = ""
     for i in np.arange(len(context.args)):
@@ -56,9 +62,10 @@ def set_stupid_joke(update, context):
     if len(text_ans) == 0:
         text_ans = "мдэ"
 
-    chat_user = ChatUser.objects.get(chat_id = user["id"])
+    chat_user = ChatUser.objects.get(chat_id = user["id"], group_chat_id = group_id)
     if chat_user.is_winner:
         tj = JokeText()
+        tj.group_chat_id = group_id
         tj.joke_text = text_ans
         tj.save()
 
@@ -71,17 +78,17 @@ def set_stupid_joke(update, context):
 
 
 from numpy.random import randint
-def bad_joke_start(update, context):
-
-    users_count = ChatUser.objects.count()
+def start_joke(update, context):
+    group_id = get_group_id(update)
+    users_count = ChatUser.objects.filter(group_chat_id = group_id).count()
 
     if users_count < 4:
-        check_error(update, "Недостаточно зарегистрированных пользователей")
+        check_error(update, "Недостаточно зарегистрированных пользователей, нужно минимум 4")
         return
 
-    items = ChatUser.objects.filter(is_in_game = True)
+    items = ChatUser.objects.filter(is_in_game = True, group_chat_id = group_id)
     if items.exists():
-        update.message.reply_text('Игра еще не закончилась, а ты получаешь в очко!')
+        update.message.reply_text('Игра еще не закончилась!')
         return
         # user = update.message.from_user
         # bad_user = ChatUser.objects.filter(chat_id = user["id"])
@@ -91,18 +98,18 @@ def bad_joke_start(update, context):
 
     # items = ChatUser.objects.all()
 
-    pks = ChatUser.objects.values_list('pk', flat=True)
+    pks = ChatUser.objects.filter(group_chat_id = group_id).values_list('pk', flat=True)
     # pks = np.asarray(pks)
     # random_idx = randint(3, len(pks))
     random_idx = random.sample(list(pks), 3)
-    print(random_idx)
-    random_items = ChatUser.objects.filter(pk__in=random_idx)
+    # print(random_idx)
+    random_items = ChatUser.objects.filter(pk__in=random_idx, group_chat_id = group_id)
 
 
     # change 3 to how many random items you want
     # random_items = random.sample(items, 3)
     # text_joke = "Заходит как то Еврей, и собака, а бармен им и говорит!"
-    text_joke = JokeText.objects.last().joke_text
+    text_joke = JokeText.objects.filter(group_chat_id = group_id).last().joke_text
     update.message.reply_text('Игра началась!')
     i = 0
     for u in random_items:
@@ -135,11 +142,11 @@ def help(update, context):
     text += "/register : для регистрации \n"
     text += "/answer [тут ответ]:  для ответа на заданные вопросы \n"
     text += "/help : для справки \n"
-    text += "/get_score : Узнать статус набранных очков \n"
-    text += "/get_vote_game : Узнать статус глосования \n"
-    text += "/end_joke_game : Закончить игру[ может только админ ] \n"
-    text += "/set_stupid_joke : Установить текст шутки [ Может делать только победитель ] \n"
-    text += "/bad_joke_start : НАЧАТЬ ИГРУ  \n"
+    text += "/score : Узнать статус набранных очков \n"
+    text += "/votes : Узнать статус глосования \n"
+    text += "/end_game : Закончить игру[ может только админ ] \n"
+    text += "/set_joke : Установить текст шутки [ Может делать только победитель ] \n"
+    text += "/start_joke : НАЧАТЬ ИГРУ  \n"
     # update.message.chat["id"]
     bot.send_message(chat_id=update.message.chat["id"], text=text)
     # update.message.reply_text('Игра такая тупая, но тебе понравится!')
@@ -157,52 +164,79 @@ def help(update, context):
 
 def register(update, context):
     user = update.message.from_user
+    group_id = get_group_id(update)
 
-    new_user = ChatUser.objects.filter(chat_id = user["id"])
+    new_user = ChatUser.objects.filter(chat_id = user["id"], group_chat_id = group_id)
+
+    is_admin = False
+    if new_user.count() == 0:
+        is_admin = True
+        tj = JokeText()
+        tj.group_chat_id = group_id
+        tj.joke_text = "Шел медведь по лесу, видит машина горит..."
+        tj.save()
+
+
     if not(new_user.exists()):
+        if is_admin:
+            update.message.reply_text("Ты админ")
         u = ChatUser()
         u.first_name = user["first_name"]
         u.last_name = user["last_name"]
         u.chat_id = user["id"]
+        u.group_chat_id = group_id
+        u.is_admin = is_admin
         u.save()
-
         update.message.reply_text("Успешно зарегистрировано")
+
     else:
         update.message.reply_text("Что то пошло не так, потому что")
         update.message.reply_text("Юзер уже есть")
 
-def get_score(update, context):
-    all_users = ChatUser.objects.all().order_by('-game_score')
+def score(update, context):
+    group_id = get_group_id(update)
+
+    all_users = ChatUser.objects.filter(group_chat_id = group_id).order_by('-game_score')
     update.message.reply_text(" Статистика по победам ")
     answer = ""
     for user in all_users:
         answer += str(user.first_name) + " " + str(user.last_name)+ ": " + str(user.game_score) + "\n"
 
-    bot.send_message(chat_id=update.message.chat["id"], text=answer)
+    bot.send_message(chat_id=group_id, text=answer)
 
-def is_end_game(chat_id):
-    all_users = ChatUser.objects.filter(is_vote=False)
+def is_end_game(group_chat_id):
+    all_users = ChatUser.objects.filter(is_vote=False, group_chat_id = group_chat_id)
 
     if all_users.exists():
         return False
     else:
         return True
 
-def is_admin(chat_id):
-    u = ChatUser.objects.get(chat_id=chat_id)
+def is_admin(chat_id, group_chat_id):
+    u = ChatUser.objects.get(chat_id=chat_id, group_chat_id=group_chat_id)
     if u.is_admin:
         return True
     else:
         False
 
-def get_vote_game(update, context):
-    all_users = ChatUser.objects.filter(is_in_game = True).order_by('number_of_vote')
+def votes(update, context):
+    group_id = get_group_id(update)
+    all_users = ChatUser.objects.filter(is_in_game = True, group_chat_id = group_id).order_by('number_of_vote')
+    if not(all_users.exists()):
+        bot.send_message(chat_id=group_id, text="Игра еще не началась")
+        return
 
-    text_joke = str(JokeText.objects.last().joke_text)
+    text_joke = str(JokeText.objects.filter(group_chat_id = group_id).last().joke_text)
 
-    bot.send_message(chat_id=update.message.chat["id"], text='Вопрос был такой')
-    bot.send_message(chat_id=update.message.chat["id"], text=text_joke)
-    bot.send_message(chat_id=update.message.chat["id"], text='Номер для голосования: Ответ [ Сколько проголосовало за ответ ] ')
+    # bot.send_message(chat_id=group_id, text='Вопрос был такой')
+    # bot.send_message(chat_id=group_id, text=text_joke)
+    text = ""
+    text += "Вопрос был такой \n"
+    text += str(text_joke)
+    text += "\n"
+    text += "Номер для голосования: Ответ [ Проголосовало за ответ ]"
+
+    bot.send_message(chat_id=group_id, text=text)
     # update.message.reply_text("Вопрос был такой")
     # update.message.reply_text("Заходит как то Еврей, и собака, а бармен им и говорит!")
     # update.message.reply_text("Номер для голосования: Ответ [ Сколько проголосовало за ответ ] ")
@@ -213,17 +247,18 @@ def get_vote_game(update, context):
         else:
             ans = " Пользователь не ответил"
         # update.message.reply_text(str(user.number_of_vote) + " : "  + str(ans) +  "[ "+ str(user.score) + " ]" )
-        bot.send_message(chat_id=update.message.chat["id"], text=str(user.number_of_vote) + " : "  + str(ans) +  "[ "+ str(user.score) + " ]")
+        bot.send_message(chat_id=group_id, text=str(user.number_of_vote) + " : "  + str(ans) +  "[ "+ str(user.score) + " ]")
 
 def end_joke_game(update, context):
     user = update.message.from_user
-    if is_admin(user["id"]):
-        end_game(update.message.chat["id"])
+    group_id = get_group_id(update)
+    if is_admin(user["id"], group_id):
+        end_game(group_id)
     else:
         update.message.reply_text("Ты не админ, и не можешь вызвать эту команду")
 
-def end_game(chat_id):
-    max_score = ChatUser.objects.all().aggregate(Max('score'))['score__max']
+def end_game(group_chat_id):
+    max_score = ChatUser.objects.filter(group_chat_id = group_chat_id).aggregate(Max('score'))['score__max']
 
     winner = ChatUser.objects.filter(score = max_score)
     w = winner[0]
@@ -231,9 +266,9 @@ def end_game(chat_id):
     w.game_score = w.game_score + 1
     w.save()
 
-    bot.send_message(chat_id=chat_id, text= "Победил: " +  str(w.first_name + " " + w.last_name + " !" ))
+    bot.send_message(chat_id=group_chat_id, text= "Победил: " +  str(w.first_name + " " + w.last_name + " !" ))
 
-    for u in ChatUser.objects.all():
+    for u in ChatUser.objects.filter(group_chat_id = group_chat_id):
         u.is_in_game = False
         u.score = 0
         u.number_of_vote = 0
@@ -244,17 +279,17 @@ def end_game(chat_id):
 
 def vote(update, context):
     user = update.message.from_user
+    group_id = get_group_id(update)
     vote_num = context.args[0]
 
-    vote_user = ChatUser.objects.get(chat_id = user["id"])
+    vote_user = ChatUser.objects.get(chat_id = user["id"], group_chat_id = group_id)
     if vote_user.is_vote:
         update.message.reply_text("Ты уже проголосовал")
         return
     try:
-        chat_user = ChatUser.objects.get(number_of_vote = vote_num)
+        chat_user = ChatUser.objects.get(number_of_vote = vote_num, group_chat_id = group_id)
     except ChatUser.DoesNotExist:
-        update.message.reply_text("Что то пошло не так, потому что")
-        update.message.reply_text("Юзер не найден с таким номером")
+        check_error(update, "Юзер не найден с таким номером")
         return
     else:
         chat_user.score = chat_user.score + 1
@@ -263,11 +298,12 @@ def vote(update, context):
         vote_user.is_vote = True
         vote_user.save()
         update.message.reply_text("Твой голос учтен")
-        if is_end_game(update.message.chat["id"]):
-            end_game(update.message.chat["id"])
+        if is_end_game(group_id):
+            end_game(group_id)
 
 def answer(update, context):
     user = update.message.from_user
+    group_id = get_group_id(update)
     text_ans = ""
     for i in np.arange(len(context.args)):
         text_ans += context.args[i] + " "
@@ -276,10 +312,9 @@ def answer(update, context):
         text_ans = "мдэ"
 
     try:
-        chat_user = ChatUser.objects.get(chat_id = user["id"])
+        chat_user = ChatUser.objects.get(chat_id = user["id"], group_chat_id = group_id)
     except ChatUser.DoesNotExist:
-        update.message.reply_text("Что то пошло не так, потому что")
-        update.message.reply_text("Ты еще не зарегестрировался")
+        check_error(update, "Ты еще не зарегестрировался")
     else:
         if chat_user.is_in_game:
             if not(chat_user.is_answer):
@@ -296,7 +331,7 @@ def options(update, context):
     user = update.message.from_user
     # print(update.message.chat.id)
     # print(update)
-    # print(user)
+    # print(update.message.chat['id'])
     # bot.send_message(chat_id='-1001436950929', text='hello there')
     # bot.send_message(chat_id='-390768652', text='hello there')
 
@@ -325,13 +360,13 @@ def main():
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("options", options))
     dp.add_handler(CommandHandler("register", register))
-    dp.add_handler(CommandHandler("bad_joke_start", bad_joke_start))
+    dp.add_handler(CommandHandler("start_joke", start_joke))
     dp.add_handler(CommandHandler("answer", answer, pass_args=True))
     dp.add_handler(CommandHandler("vote", vote, pass_args=True))
-    dp.add_handler(CommandHandler("get_score", get_score))
-    dp.add_handler(CommandHandler("get_vote_game", get_vote_game))
-    dp.add_handler(CommandHandler("end_joke_game", end_joke_game))
-    dp.add_handler(CommandHandler("set_stupid_joke", set_stupid_joke, pass_args=True))
+    dp.add_handler(CommandHandler("score", score))
+    dp.add_handler(CommandHandler("votes", votes))
+    dp.add_handler(CommandHandler("end_game", end_game))
+    dp.add_handler(CommandHandler("set_joke", set_joke, pass_args=True))
 
     # dp.add_handler(MessageHandler(Filters.text | Filters.photo, get_input))
 
