@@ -3,7 +3,7 @@ import uuid
 from numpy.random import randint
 
 class ChatUser(models.Model):
-    chat_id = models.IntegerField(default=0)
+    chat_id = models.BigIntegerField(default=0)
     first_name = models.CharField(max_length=140, blank=True, null=True)
     last_name = models.CharField(max_length=140, blank=True, null=True)
     is_active = models.BooleanField(default=True)
@@ -14,7 +14,7 @@ class ChatUser(models.Model):
     score = models.IntegerField(default=0)
     number_of_vote = models.IntegerField(default=0)
     is_vote = models.BooleanField(default=False)
-    group_chat_id = models.IntegerField(default=0)
+    group_chat_id = models.BigIntegerField(default=0)
 
     game_score = models.IntegerField(default=0)
     is_admin = models.BooleanField(default=False)
@@ -26,5 +26,5 @@ class ChatUser(models.Model):
 
 class JokeText(models.Model):
     joke_text = models.CharField(max_length=500, blank=True, null=True)
-    group_chat_id = models.IntegerField(default=0)
+    group_chat_id = models.BigIntegerField(default=0)
 # Create your models here.
