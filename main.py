@@ -181,6 +181,7 @@ def help(update, context):
 def register(update, context):
     user = update.message.from_user
     group_id = get_group_id(update)
+    print(group_id)
 
     new_user = ChatUser.objects.filter(chat_id = user["id"], group_chat_id = group_id)
 
