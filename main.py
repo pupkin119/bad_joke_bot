@@ -329,7 +329,9 @@ def answer(update, context):
         text_ans = "мдэ"
 
     try:
-        chat_user = ChatUser.objects.get(chat_id = user["id"], group_chat_id = int(group_id))
+        chat_user = ChatUser.objects.get(chat_id = user["id"]
+                                         # group_chat_id = int(group_id)
+                                         )
     except ChatUser.DoesNotExist:
         check_error(update, "Ты еще не зарегестрировался")
     else:
