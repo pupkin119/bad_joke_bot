@@ -266,18 +266,18 @@ def votes(update, context):
         # update.message.reply_text(str(user.number_of_vote) + " : "  + str(ans) +  "[ "+ str(user.score) + " ]" )
         updater.bot.send_message(chat_id=group_id, text=str(user.number_of_vote) + " : "  + str(ans) +  "[ "+ str(user.score) + " ]")
 
-def end_joke_game(update, context):
+def end_game(update, context):
     user = update.message.from_user
     group_id = get_group_id(update)
     if is_admin(user["id"], group_id):
-        end_game(group_id)
+        end_game_func(group_id)
     else:
         update.message.reply_text("Ты не админ, и не можешь вызвать эту команду")
 
-def end_game(group_chat_id):
+def end_game_func(group_chat_id):
     max_score = ChatUser.objects.filter(group_chat_id = group_chat_id).aggregate(Max('score'))['score__max']
 
-    winner = ChatUser.objects.filter(score = max_score)
+    winner = ChatUser.objects.filter(score = max_score, group_chat_id = group_chat_id)
     w = winner[0]
     w.is_winner = True
     w.game_score = w.game_score + 1
@@ -316,7 +316,7 @@ def vote(update, context):
         vote_user.save()
         update.message.reply_text("Твой голос учтен")
         if is_end_game(group_id):
-            end_game(group_id)
+            end_game_func(group_id)
 
 def answer(update, context):
     user = update.message.from_user
