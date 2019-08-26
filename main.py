@@ -281,10 +281,10 @@ def end_game_func(group_chat_id):
     winner = ChatUser.objects.filter(score = max_score, group_chat_id = group_chat_id)
     w = winner[0]
     w.is_winner = True
-    w.game_score = w.game_score + 1
+    w.game_score = int(w.game_score) + 1
     w.save()
 
-    updater.bot.send_message(chat_id=group_chat_id, text= "Победил: " +  str(w.first_name + " " + w.last_name + " !" ))
+    updater.bot.send_message(chat_id=group_chat_id, text= "Победил: " +  str(w.first_name + " " + w.last_name + " ! \n Можешь поставить новую шутку через /set_joke" ))
 
     for u in ChatUser.objects.filter(group_chat_id = group_chat_id):
         u.is_in_game = False
@@ -310,7 +310,7 @@ def vote(update, context):
         check_error(update, "Юзер не найден с таким номером")
         return
     else:
-        chat_user.score = chat_user.score + 1
+        chat_user.score = int(chat_user.score) + 1
         chat_user.save()
 
         vote_user.is_vote = True
