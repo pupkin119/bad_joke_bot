@@ -184,9 +184,10 @@ def register(update, context):
     # print(group_id)
 
     new_user = ChatUser.objects.filter(chat_id = user["id"], group_chat_id = group_id)
+    group_chat_users = ChatUser.objects.filter(group_chat_id = group_id)
 
     is_admin = False
-    if new_user.count() == 0:
+    if group_chat_users.count() == 0:
         is_admin = True
         tj = JokeText()
         tj.group_chat_id = group_id
