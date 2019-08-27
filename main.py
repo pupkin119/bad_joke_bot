@@ -220,7 +220,7 @@ def score(update, context):
     for user in all_users:
         answer += str(user.first_name) + " " + str(user.last_name)+ ": " + str(user.game_score) + "\n"
 
-    bot.send_message(chat_id=group_id, text=answer)
+    updater.bot.send_message(chat_id=group_id, text=answer)
 
 def is_end_game(group_chat_id):
     all_users = ChatUser.objects.filter(is_vote=False, group_chat_id = group_chat_id)
