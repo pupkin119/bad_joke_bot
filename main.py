@@ -274,10 +274,20 @@ def register(update, context):
         u.last_name = user["last_name"]
         u.chat_id = user["id"]
         u.group_chat_id = group_id
+        u.current_group_id = group_id
+        u.group_chat_title = update.message.chat['title']
         u.is_admin = is_admin
         u.save()
-        update.message.reply_text("Успешно зарегистрировано")
+        
+        text_ans = "Успешно зарегистрировано \n "
+        text_ans += "Не забудь написать боту(@BadJokesRanimogoBot) в лс /start чтобы он мог отсылать тебе сообщения"
 
+        update.message.reply_text(text_ans)
+
+        users = ChatUser.objects.filter(chat_id=user["id"])
+
+        if int(users.count()) > 1:
+            users.update(current_group_id = group_id)
     else:
         update.message.reply_text("Что то пошло не так, потому что")
         update.message.reply_text("Юзер уже есть")
