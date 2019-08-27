@@ -156,7 +156,7 @@ def start_joke(update, context):
     try:
 
         if int(ChatUser.objects.filter(group_chat_id = str(group_id)).count()) < 3:
-            print(int(ChatUser.objects.filter(group_chat_id = str(group_id)).count()))
+            print( "количество зареганых пользователей в: " + str(group_id) + str(int(ChatUser.objects.filter(group_chat_id = str(group_id)).counst())))
             check_error(update, "Недостаточно зарегистрированных пользователей, нужно минимум 3")
             return
 
