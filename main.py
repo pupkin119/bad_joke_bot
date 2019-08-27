@@ -215,12 +215,13 @@ def score(update, context):
     group_id = get_group_id(update)
 
     all_users = ChatUser.objects.filter(group_chat_id = group_id).order_by('-game_score')
-    update.message.reply_text(" Статистика по победам ")
-    answer = ""
+
+    answer = " Статистика по победам "
     for user in all_users:
         answer += str(user.first_name) + " " + str(user.last_name)+ ": " + str(user.game_score) + "\n"
 
-    updater.bot.send_message(chat_id=group_id, text=answer)
+    update.message.reply_text(answer)
+    # updater.bot.send_message(chat_id=group_id, text=answer)
 
 def is_end_game(group_chat_id):
     all_users = ChatUser.objects.filter(is_vote=False, group_chat_id = group_chat_id)
