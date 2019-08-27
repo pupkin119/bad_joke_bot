@@ -98,8 +98,11 @@ def set_chat(update, context):
         text_ans = "Мы обновили информацию \n "
         text_ans += "Текущий чат теперь: " + chat_users[int_ans].group_chat_title
         update.message.reply_text(text_ans)
-        
+
     except IndexError:
+        update.message.reply_text("Чата с таким номером нет")
+
+    except AssertionError:
         update.message.reply_text("Чата с таким номером нет")
 
 
