@@ -138,7 +138,7 @@ def set_joke(update, context):
         return
 
     chat_user = ChatUser.objects.get(chat_id = user["id"], group_chat_id = group_id)
-    if chat_user.is_winner:
+    if chat_user.is_winner or is_admin(user['id'], group_id):
         tj = JokeText()
         tj.group_chat_id = group_id
         tj.joke_text = text_ans
