@@ -72,7 +72,7 @@ def set_joke(update, context):
         text_ans += context.args[i] + " "
 
     if len(text_ans) == 0:
-        text_ans = "Ты люблю Егора Крида, скрытный гей, а еще я не умеешь пользоваться командой /set_joke !"
+        text_ans = "Ты любишь Егора Крида, скрытный гей, а еще я не умеешь пользоваться командой /set_joke !"
         update.message.reply_text(text_ans)
         return
 
