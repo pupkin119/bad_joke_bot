@@ -93,7 +93,10 @@ def set_chat(update, context):
     chat_users = ChatUser.objects.filter(chat_id=user["id"]).order_by('-id')
 
     ChatUser.objects.filter(chat_id = user['id']).update(current_group_id = chat_users[int_ans].group_chat_id)
-    update.message.reply_text("Мы обновили информацию")
+    text_ans = "Мы обновили информацию \n "
+    text_ans += "Текущий чат теперь: " + chat_users[int_ans].group_chat_title
+
+    update.message.reply_text(text_ans)
 
 def list_chat(update, context):
     user = update.message.from_user
@@ -278,7 +281,7 @@ def register(update, context):
         u.group_chat_title = update.message.chat['title']
         u.is_admin = is_admin
         u.save()
-        
+
         text_ans = "Успешно зарегистрировано \n "
         text_ans += "Не забудь написать боту(@BadJokesRanimogoBot) в лс /start чтобы он мог отсылать тебе сообщения"
 
@@ -297,7 +300,7 @@ def score(update, context):
 
     all_users = ChatUser.objects.filter(group_chat_id = group_id).order_by('-game_score')
 
-    answer = " Статистика по победам "
+    answer = " Статистика по победам  \n"
     for user in all_users:
         answer += str(user.first_name) + " " + str(user.last_name)+ ": " + str(user.game_score) + "\n"
 
