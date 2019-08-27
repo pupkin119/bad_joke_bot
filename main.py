@@ -46,6 +46,15 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+def rollback_group_chat(group_chat_id):
+    for u in ChatUser.objects.filter(group_chat_id = group_chat_id):
+        u.is_in_game = False
+        u.score = 0
+        u.number_of_vote = 0
+        u.is_vote = False
+        u.is_answer = False
+        u.answer = ""
+        u.save()
 
 def check_error(update, text):
     ans_text = "Что то пошло не так, потому что: \n"
@@ -62,6 +71,44 @@ def start(update, context):
     """Send a message when the command /start is issued."""
     update.message.reply_text('Привет я бот для игры в плохие шутки, добавь меня в чат и мы начнем игру')
     update.message.reply_text('Все доступные команды ты можешь посмотреть по /help')
+
+def rollback(update, context):
+    user = update.message.from_user
+    group_id = get_group_id(update)
+
+    if is_admin(user['id'], group_id):
+        rollback_group_chat(group_id)
+        update.message.reply_text('Finish Rollback')
+
+def set_chat(update, context):
+    user = update.message.from_user
+    # group_id = get_group_id(update)
+
+    if len(context.args) == 0:
+        update.message.reply_text("Тебе нужно написать цифру чата например /set_chat 1")
+        return
+
+    int_ans = int(context.args[0])
+    int_ans = int_ans - 1
+    chat_users = ChatUser.objects.filter(chat_id=user["id"]).order_by('-id')
+
+    ChatUser.objects.filter(chat_id = user['id']).update(current_group_id = chat_users[int_ans].group_chat_id)
+    update.message.reply_text("Мы обновили информацию")
+
+def list_chat(update, context):
+    user = update.message.from_user
+    # group_id = get_group_id(update)
+
+    chat_users = ChatUser.objects.filter(chat_id=user["id"]).order_by('-id')
+
+    list_text = ""
+    i = 0
+    for u in chat_users:
+        i += 1
+        list_text += str(i) + ": "+ str(u.group_chat_title) + ". \n"
+    list_text += "Ты можешь выбрать чат в котором будешь отвечать с помошью /set_chat [ номер чата ]"
+    update.message.reply_text(update.message.reply_text(list_text))
+
 
 def set_joke(update, context):
     user = update.message.from_user
@@ -95,56 +142,69 @@ from numpy.random import randint
 def start_joke(update, context):
     group_id = get_group_id(update)
     users_count = ChatUser.objects.filter(group_chat_id = group_id).count()
+    try:
 
-    # if users_count < 3:
-    #     check_error(update, "Недостаточно зарегистрированных пользователей, нужно минимум 3")
-    #     return
+        if int(ChatUser.objects.filter(group_chat_id = str(group_id)).count()) < 3:
+            check_error(update, "Недостаточно зарегистрированных пользователей, нужно минимум 3")
+            return
 
-    items = ChatUser.objects.filter(is_in_game = True, group_chat_id = group_id)
-    if items.exists():
-        update.message.reply_text('Игра еще не закончилась!')
-        return
-        # user = update.message.from_user
-        # bad_user = ChatUser.objects.filter(chat_id = user["id"])
-        # for u in bad_user:
-        #     u.
-
-
-    # items = ChatUser.objects.all()
-
-    pks = ChatUser.objects.filter(group_chat_id = group_id).values_list('pk', flat=True)
-    # pks = np.asarray(pks)
-    # random_idx = randint(3, len(pks))
-    random_idx = random.sample(list(pks), 3)
-    # print(random_idx)
-    random_items = ChatUser.objects.filter(pk__in=random_idx, group_chat_id = group_id)
+        items = ChatUser.objects.filter(is_in_game = True, group_chat_id = group_id)
+        if items.exists():
+            update.message.reply_text('Игра еще не закончилась!')
+            return
+            # user = update.message.from_user
+            # bad_user = ChatUser.objects.filter(chat_id = user["id"])
+            # for u in bad_user:
+            #     u.
 
 
-    # change 3 to how many random items you want
-    # random_items = random.sample(items, 3)
-    # text_joke = "Заходит как то Еврей, и собака, а бармен им и говорит!"
-    text_joke = JokeText.objects.filter(group_chat_id = group_id).last().joke_text
-    update.message.reply_text('Игра началась!')
-    i = 0
-    for u in random_items:
-        i += 1
-        u.is_in_game = True
-        u.is_answer = True
-        u.number_of_vote = i
-        u.save()
-        # bot.send_message(chat_id=u.chat_id, text="Привет, " + u.first_name + "!")
-        # bot.send_message(chat_id=u.chat_id, text='Дополни как вот такую шутку:')
-        # bot.send_message(chat_id=u.chat_id, text=str(text_joke))
-        # bot.send_message(chat_id=u.chat_id, text="Ты можешь ответить через /answer команду")
-        # updater.bot.send_message(chat_id=u.chat_id, text="Привет, " + str(u.first_name) + "!")
-        # updater.bot.send_message(chat_id=u.chat_id, text='Дополни как вот такую шутку:')
-        # updater.bot.send_message(chat_id=u.chat_id, text=str(text_joke))
-        text_to_use = "Привет, " + str(u.first_name) + "! \n"
-        text_to_use += "Дополни как вот такую шутку: \n"
-        text_to_use += "Ты можешь ответить через /answer команду"
-        updater.bot.send_message(chat_id=u.chat_id, text=text_to_use)
+        # items = ChatUser.objects.all()
 
-    update.message.reply_text('Вопросики отосланы!')
+        pks = ChatUser.objects.filter(group_chat_id = group_id).values_list('pk', flat=True)
+        # pks = np.asarray(pks)
+        # random_idx = randint(3, len(pks))
+        random_idx = random.sample(list(pks), 3)
+        # print(random_idx)
+        random_items = ChatUser.objects.filter(pk__in=random_idx, group_chat_id = group_id)
+
+
+        # change 3 to how many random items you want
+        # random_items = random.sample(items, 3)
+        # text_joke = "Заходит как то Еврей, и собака, а бармен им и говорит!"
+        text_joke = JokeText.objects.filter(group_chat_id = group_id).last().joke_text
+        update.message.reply_text('Игра началась!')
+        i = 0
+        for u in random_items:
+            # i += 1
+            # u.is_in_game = True
+            # u.is_answer = True
+            # u.number_of_vote = i
+            # u.save()
+            chat_title = str(ChatUser.objects.get(group_chat_id = u.current_group_id, chat_id = u.chat_id).group_chat_title)
+            text_to_use = "Привет, " + str(u.first_name) + "! \n"
+            text_to_use = "Сейчас ты играешь в чате: , " + chat_title + "! \n"
+            text_to_use += "Дополни как вот такую шутку: \n"
+            text_to_use += " " + text_joke +  " \n"
+            text_to_use += "Ты можешь ответить через /answer команду \n "
+            text_to_use += "Чтобы посмотреть или сменить чат используй команды /list_chat  /set_chat \n"
+            updater.bot.send_message(chat_id=u.chat_id, text=text_to_use)
+        update.message.reply_text('Вопросики отосланы!')
+
+        for u in random_items:
+            i += 1
+            u.is_in_game = True
+            u.is_answer = True
+            u.number_of_vote = i
+            u.save()
+
+    except updater.dispatcher.TelegramError as e:
+
+        rollback_group_chat(group_id)
+        updater.bot.send_message(chat_id=268495107, text=str(e))
+
+        updater.bot.send_message(chat_id=group_id, text="Игра не может начаться, так как кто то из участников не написал боту /start в личке, по соглашению принятому Telegramm, бот не может начать писать первым человку в лс")
+
+
 
 
 
@@ -167,7 +227,10 @@ def help(update, context):
     text += "/votes : Узнать статус глосования \n"
     text += "/end_game : Закончить игру[ может только админ ] \n"
     text += "/set_joke : Установить текст шутки [ Может делать только победитель ] \n"
+    text += "/set_chat : Установить чат в котором будешь играть в тупые шутки  \n"
+    text += "/list_chat : Список чатов в котором играешь в тупые шутки \n"
     text += "/start_joke : НАЧАТЬ ИГРУ  \n"
+    # text += "@ogoltelyi_tusovshik по вопросам и ошибкам"
     # update.message.chat["id"]
     updater.bot.send_message(chat_id=update.message.chat["id"], text=text)
     # update.message.reply_text('Игра такая тупая, но тебе понравится!')
@@ -307,6 +370,9 @@ def end_game_func(group_chat_id):
 def vote(update, context):
     user = update.message.from_user
     group_id = get_group_id(update)
+    if len(context.args) == 0:
+        update.message.reply_text("После /vote необходимо указать цифру")
+
     vote_num = context.args[0]
 
     vote_user = ChatUser.objects.get(chat_id = user["id"], group_chat_id = group_id)
@@ -339,13 +405,10 @@ def answer(update, context):
         update.message.reply_text("Ты не умеешь пользоваться командой /answer \n после /answer должны идти буковки чтобы бот мог записать твой несмешной ответ")
         return
 
-    try:
-        chat_user = ChatUser.objects.get(chat_id = user["id"]
-                                         # group_chat_id = int(group_id)
-                                         )
-    except ChatUser.DoesNotExist:
-        check_error(update, "Ты еще не зарегестрировался")
-    else:
+    chat_users = ChatUser.objects.filter(chat_id = user["id"])
+
+    if chat_users.exists():
+        chat_user = ChatUser.objects.get( chat_id = user["id"], group_chat_id = chat_users[0].current_group_id )
         if chat_user.is_in_game:
             if not(chat_user.is_answer):
                 update.message.reply_text("Ты уже ответил")
@@ -356,6 +419,9 @@ def answer(update, context):
                 update.message.reply_text("Ответ успешно записан")
         else:
             update.message.reply_text("Ты не в игре")
+    else:
+        check_error(update, "Ты еще не зарегестрировался")
+
 
 def options(update, context):
     user = update.message.from_user
@@ -374,6 +440,7 @@ def echo(update, context):
 def error(update, context):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
+    updater.bot.send_message(chat_id=268495107, text=context.error)
 
 def main():
 
@@ -398,6 +465,9 @@ def main():
     dp.add_handler(CommandHandler("votes", votes))
     dp.add_handler(CommandHandler("end_game", end_game))
     dp.add_handler(CommandHandler("set_joke", set_joke, pass_args=True))
+    dp.add_handler(CommandHandler("rollback", rollback))
+    dp.add_handler(CommandHandler("set_chat", set_chat, pass_args=True))
+    dp.add_handler(CommandHandler("list_chat", list_chat))
 
     # dp.add_handler(MessageHandler(Filters.text | Filters.photo, get_input))
 
