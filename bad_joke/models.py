@@ -18,6 +18,8 @@ class ChatUser(models.Model):
 
     game_score = models.IntegerField(default=0)
     is_admin = models.BooleanField(default=False)
+    current_group_id = models.BigIntegerField(default=0)
+    group_chat_title =  models.CharField(max_length=500, blank=True, null=True)
 
     # is_answer = models.UUIDField(default=uuid.uuid4, blank=False, null=False, unique=True)
 

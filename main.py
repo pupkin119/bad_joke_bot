@@ -60,7 +60,7 @@ def get_group_id(update):
 # update. Error handlers also receive the raised TelegramError object in error.
 def start(update, context):
     """Send a message when the command /start is issued."""
-    update.message.reply_text('Привет я бот для игры в плохие шутки')
+    update.message.reply_text('Привет я бот для игры в плохие шутки, добавь меня в чат и мы начнем игру')
     update.message.reply_text('Все доступные команды ты можешь посмотреть по /help')
 
 def set_joke(update, context):
@@ -72,7 +72,9 @@ def set_joke(update, context):
         text_ans += context.args[i] + " "
 
     if len(text_ans) == 0:
-        text_ans = "мдэ"
+        text_ans = "Ты люблю Егора Крида, скрытный гей, а еще я не умеешь пользоваться командой /set_joke !"
+        update.message.reply_text(text_ans)
+        return
 
     chat_user = ChatUser.objects.get(chat_id = user["id"], group_chat_id = group_id)
     if chat_user.is_winner:
@@ -94,7 +96,7 @@ def start_joke(update, context):
     group_id = get_group_id(update)
     users_count = ChatUser.objects.filter(group_chat_id = group_id).count()
 
-    if users_count < 4:
+    if users_count >= 3:
         check_error(update, "Недостаточно зарегистрированных пользователей, нужно минимум 4")
         return
 
@@ -134,10 +136,13 @@ def start_joke(update, context):
         # bot.send_message(chat_id=u.chat_id, text='Дополни как вот такую шутку:')
         # bot.send_message(chat_id=u.chat_id, text=str(text_joke))
         # bot.send_message(chat_id=u.chat_id, text="Ты можешь ответить через /answer команду")
-        updater.bot.send_message(chat_id=u.chat_id, text="Привет, " + u.first_name + "!")
-        updater.bot.send_message(chat_id=u.chat_id, text='Дополни как вот такую шутку:')
-        updater.bot.send_message(chat_id=u.chat_id, text=str(text_joke))
-        updater.bot.send_message(chat_id=u.chat_id, text="Ты можешь ответить через /answer команду")
+        # updater.bot.send_message(chat_id=u.chat_id, text="Привет, " + str(u.first_name) + "!")
+        # updater.bot.send_message(chat_id=u.chat_id, text='Дополни как вот такую шутку:')
+        # updater.bot.send_message(chat_id=u.chat_id, text=str(text_joke))
+        text_to_use = "Привет, " + str(u.first_name) + "! \n"
+        text_to_use += "Дополни как вот такую шутку: \n"
+        text_to_use += "Ты можешь ответить через /answer команду"
+        updater.bot.send_message(chat_id=u.chat_id, text=text_to_use)
 
     update.message.reply_text('Вопросики отосланы!')
 
@@ -182,6 +187,9 @@ def register(update, context):
     user = update.message.from_user
     group_id = get_group_id(update)
     # print(group_id)
+    if user['id'] == group_id:
+        update.message.reply_text("Необходимо закинуть бота в чат и продолжить регистрирацию внутри чата")
+        return
 
     new_user = ChatUser.objects.filter(chat_id = user["id"], group_chat_id = group_id)
     group_chat_users = ChatUser.objects.filter(group_chat_id = group_id)
@@ -322,13 +330,14 @@ def vote(update, context):
 
 def answer(update, context):
     user = update.message.from_user
-    group_id = get_group_id(update)
+    # group_id = get_group_id(update)
     text_ans = ""
     for i in np.arange(len(context.args)):
         text_ans += context.args[i] + " "
 
     if len(text_ans) == 0:
-        text_ans = "мдэ"
+        update.message.reply_text("Ты не умеешь пользоваться командой /answer \n после /answer должны идти буковки чтобы бот мог записать твой несмешной ответ")
+        return
 
     try:
         chat_user = ChatUser.objects.get(chat_id = user["id"]
