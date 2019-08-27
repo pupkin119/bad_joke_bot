@@ -92,7 +92,7 @@ def set_chat(update, context):
     int_ans = int_ans - 1
     chat_users = ChatUser.objects.filter(chat_id=user["id"]).order_by('-id')
 
-    if chat_users.count < (int_ans + 1):
+    if chat_users.count() < (int_ans + 1):
         update.message.reply_text("Чата с таким номером нет")
 
     ChatUser.objects.filter(chat_id = user['id']).update(current_group_id = chat_users[int_ans].group_chat_id)
