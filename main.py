@@ -92,14 +92,16 @@ def set_chat(update, context):
     int_ans = int_ans - 1
     chat_users = ChatUser.objects.filter(chat_id=user["id"]).order_by('-id')
 
-    if chat_users.count() < (int_ans + 1):
+
+    try:
+        ChatUser.objects.filter(chat_id = user['id']).update(current_group_id = chat_users[int_ans].group_chat_id)
+        text_ans = "Мы обновили информацию \n "
+        text_ans += "Текущий чат теперь: " + chat_users[int_ans].group_chat_title
+        update.message.reply_text(text_ans)
+        
+    except IndexError:
         update.message.reply_text("Чата с таким номером нет")
 
-    ChatUser.objects.filter(chat_id = user['id']).update(current_group_id = chat_users[int_ans].group_chat_id)
-    text_ans = "Мы обновили информацию \n "
-    text_ans += "Текущий чат теперь: " + chat_users[int_ans].group_chat_title
-
-    update.message.reply_text(text_ans)
 
 def list_chat(update, context):
     user = update.message.from_user
