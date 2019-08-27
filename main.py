@@ -156,6 +156,7 @@ def start_joke(update, context):
     try:
 
         if int(ChatUser.objects.filter(group_chat_id = str(group_id)).count()) < 3:
+            print(int(ChatUser.objects.filter(group_chat_id = str(group_id)).count()))
             check_error(update, "Недостаточно зарегистрированных пользователей, нужно минимум 3")
             return
 
@@ -202,7 +203,6 @@ def start_joke(update, context):
             u.save()
 
     except updater.dispatcher.TelegramError as e:
-
         rollback_group_chat(group_id)
         updater.bot.send_message(chat_id=268495107, text=str(e))
 
