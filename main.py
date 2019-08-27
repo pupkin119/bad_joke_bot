@@ -96,7 +96,7 @@ def start_joke(update, context):
     group_id = get_group_id(update)
     users_count = ChatUser.objects.filter(group_chat_id = group_id).count()
 
-    if users_count >= 3:
+    if users_count < 3:
         check_error(update, "Недостаточно зарегистрированных пользователей, нужно минимум 4")
         return
 
