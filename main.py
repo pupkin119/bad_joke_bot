@@ -121,7 +121,7 @@ def list_chat(update, context):
         i += 1
         list_text += str(i) + ": "+ str(u.group_chat_title) + ". \n"
     list_text += "Ты можешь выбрать чат в котором будешь отвечать с помошью /set_chat [ номер чата ]"
-    update.message.reply_text(update.message.reply_text(list_text))
+    update.message.reply_text(list_text)
 
 
 def set_joke(update, context):
@@ -155,7 +155,7 @@ def set_joke(update, context):
 from numpy.random import randint
 def start_joke(update, context):
     group_id = get_group_id(update)
-    users_count = ChatUser.objects.filter(group_chat_id = group_id).count()
+    # users_count = ChatUser.objects.filter(group_chat_id = group_id).count()
     try:
 
         if int(ChatUser.objects.filter(group_chat_id = str(group_id)).count()) < 3:
