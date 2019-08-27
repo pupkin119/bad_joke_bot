@@ -155,13 +155,6 @@ def start_joke(update, context):
         if items.exists():
             update.message.reply_text('Игра еще не закончилась!')
             return
-            # user = update.message.from_user
-            # bad_user = ChatUser.objects.filter(chat_id = user["id"])
-            # for u in bad_user:
-            #     u.
-
-
-        # items = ChatUser.objects.all()
 
         pks = ChatUser.objects.filter(group_chat_id = group_id).values_list('pk', flat=True)
         # pks = np.asarray(pks)
@@ -208,17 +201,6 @@ def start_joke(update, context):
         updater.bot.send_message(chat_id=group_id, text="Игра не может начаться, так как кто то из участников не написал боту /start в личке, по соглашению принятому Telegramm, бот не может начать писать первым человку в лс")
 
 
-
-
-
-    # bot.send_message(chat_id='397622734', text='Привет Владимир!')
-    # bot.send_message(chat_id='397622734', text='Дополни как вот такую хуебень:')
-    # bot.send_message(chat_id='397622734', text='На столе стоит корова мылом умывается...')
-    #
-    # bot.send_message(chat_id='423801182', text='Привет Александр!')
-    # bot.send_message(chat_id='423801182', text='Дополни как вот такую хуебень:')
-    # bot.send_message(chat_id='423801182', text='На столе стоит корова мылом умывается...')
-
 def help(update, context):
     """Send a message when the command /help is issued."""
     text = "Игра такая тупая, но тебе понравится! \n"
@@ -236,18 +218,6 @@ def help(update, context):
     # text += "@ogoltelyi_tusovshik по вопросам и ошибкам"
     # update.message.chat["id"]
     updater.bot.send_message(chat_id=update.message.chat["id"], text=text)
-    # update.message.reply_text('Игра такая тупая, но тебе понравится!')
-    # update.message.reply_text('Список команд')
-    # update.message.reply_text('/register : для регистрации')
-    # update.message.reply_text('/answer [тут ответ]:  для ответа на заданные вопросы')
-    # update.message.reply_text('/help : для справки')
-    # update.message.reply_text('/get_score : Узнать статус набранных очков')
-    # update.message.reply_text('/get_vote_game : Узнать статус глосования')
-    # update.message.reply_text('/end_joke_game : Закончить игру[ может только админ ]')
-    # update.message.reply_text('/set_stupid_joke : Установить текст шутки [ Может делать только победитель ]')
-
-
-
 
 def register(update, context):
     user = update.message.from_user
