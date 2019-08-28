@@ -33,7 +33,8 @@ from telegram import Bot
 bot = Bot(token=env('bot_token'))
 
 REQUEST_KWARGS = {
-    'proxy_url': 'socks5://88.198.55.164:1080',
+    # 'proxy_url': 'socks5://88.198.55.164:1080',
+    'proxy_url': 'socks5://166.62.116.91:17802',
     # Optional, if you need authentication:
     # 'urllib3_proxy_kwargs': {
     #     'username': 'PROXY_USER',
