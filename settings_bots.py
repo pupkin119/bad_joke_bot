@@ -13,7 +13,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'bots_bad_joke',
         'USER': 'developer',
-        'PASSWORD' : env('db_pass'),
+        'PASSWORD' : '2010690',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
@@ -23,4 +23,4 @@ INSTALLED_APPS = (
     'bad_joke',
 )
 
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = 'v%4rh!_o64$mfb9qlv3z#v92r((ku&@(vcaj8gs0s!53ac2s8w'
